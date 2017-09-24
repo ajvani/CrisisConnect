@@ -23,11 +23,13 @@ import { BlurView } from 'react-native-blur'
 import { Grid, Row, Col } from 'react-native-easy-grid'
 import { SegmentedControls } from 'react-native-radio-buttons'
 
+import Fetch from 'fetch'
+
 const { width, height } = Dimensions.get('window');
 
 const ASPECT_RATIO = width / height;
-const LATITUDE = 37.78825;
-const LONGITUDE = -122.4324;
+const LATITUDE = 42.293014;
+const LONGITUDE = -83.716372;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
@@ -36,7 +38,7 @@ let id = 1;
 export default class App extends Component {
     constructor(props) {
       super(props);
-    
+
       this.state = {
         region: {
             latitude: LATITUDE,
@@ -44,30 +46,105 @@ export default class App extends Component {
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA,
         },
-        issue: null,
+        type: null,
         modalVisible: false,
         markers: [],
         dropPin: false,
         modalFormVisible: false, 
+        urgency: null, 
+        confirmationMessage: false, 
+        description: null, 
       };
+      
     }
 
     static navigationOptions = {
         title: "Crisis Connect",
     };
 
+    log(i) {
+        console.log(i); 
+    }
+
+    setMarkers(value) {
+        console.log('RESETTING TO: ' + value); 
+        this.setState({markers: value});
+    }
+
+    getMarkers(_callBack) {
+        fetch('https://crisis-connect.herokuapp.com/getReports')
+        .then(function(res) {
+            var result = []
+            body = JSON.parse(res._bodyInit).body;
+            for (var i = 0; i < body.length; i += 1) {
+                if (body[i].urgency == 1) {
+                    pinC = '#ffff00'
+                } else if (body[i].urgency == 2) {
+                    pinC = '#ff8c00'
+                } else {
+                    pinC = '#d80000'
+                }
+
+                markerVal = {
+                    coordinate: {
+                        "latitude": parseFloat(body[i].latitude),
+                        "longitude": parseFloat(body[i].longitude)
+                    }, 
+                    key: "" + body[i].type + ": (" + parseFloat(body[i].latitude) + "," 
+                        + parseFloat(body[i].longitude) + ")",
+                    pinColor: pinC
+                };
+
+                result.push(markerVal);
+                _callBack(result); 
+            }
+        }, function(err) {
+            console.log(err);
+        }) 
+    }
+
     onMapPress(e) {
         if (this.state.dropPin) {
+            if (this.state.urgency == '!') {
+                urg = 1;
+                pinC = '#ffff00';
+            } else if (this.state.urgency == '!!') {
+                urg = 2;
+                pinC = '#ff8c00';
+            } else {
+                urg = 3
+                pinC = '#d80000';
+            }
+
             this.setState({
                 markers: [
                     ...this.state.markers,
                     {
                         coordinate: e.nativeEvent.coordinate,
-                        key: id++,
+                        key: "" + this.state.type + ": (" + e.nativeEvent.coordinate['latitude'] 
+                            + "," + e.nativeEvent.coordinate['longitude'] + ")",
+                        pinColor: pinC
                     },
                 ],
             });
-            this.setState({dropPin: false});
+
+            fetch('https://crisis-connect.herokuapp.com/submitReport', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: this.state.type,
+                    latitude: e.nativeEvent.coordinate['latitude'].toString(),
+                    longitude: e.nativeEvent.coordinate['longitude'].toString(),
+                    description: this.state.description,
+                    urgency: urg,
+                    state: null
+                })
+            })
+
+            this.setState({dropPin: false, dropPinMessage: false, confirmationMessage: true});
         }
     }
 
@@ -79,25 +156,56 @@ export default class App extends Component {
         this.setState({modalFormVisible: visible})
     }
 
-    onPressIssue(e) {
-        this.setModalFormVisible(!this.state.modalFormVisible);
-        this.setModalVisible(!this.state.modalVisible);
-        this.setState({dropPin: true});
+    onPressIssue(e, issueName) {
+        this.setState({type: issueName})
+        this.setModalFormVisible(true);
+        this.setModalVisible(false);
     }
 
-    setSelectedOption(selectedOption){
+    onPressForm(e) {
+        console.log(this.state.description); 
+        console.log(this.state.urgency); 
+        if (true) { 
+            this.setState({dropPin: true, dropPinMessage: true});
+            this.setModalVisible(false); 
+            this.setModalFormVisible(false); 
+        }
+        // push to backend here 
+    }
+
+    clear(e) {
+        this.setModalVisible(false); 
+        this.setModalFormVisible(false); 
+        this.setState({type: null, urgency: null, description: null, dropPinMessage: false, dropPin: false});
+    }
+
+    setSelectedOption(urgency){
         this.setState({
-            selectedOption
+            urgency
         });
     }
 
+    renderMessage(condition, message) {
+        if (condition) {
+            return (
+                <View style={styles.message}>
+                    <Text style={{color: '#ffffff'}}>{message}</Text>
+                </View>
+            );
+        } else {
+            return; 
+        }
+    }
+
     render() {
+        
+
         return (
             <View style={styles.container}>
             <StatusBar
                 barStyle='default'
             />
-            
+
             <Modal
                 animationType="slide"
                 transparent={false}
@@ -118,7 +226,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Fire')}
                 >
                     <Image
                     source={require('./images/fire.png')}
@@ -130,7 +238,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Broken Traffic Light')}
                 >
                     <Image
                     source={require('./images/brokentrafficlight.png')}
@@ -141,7 +249,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Car Damage')}
                 >
                     <Image
                     source={require('./images/cardamage.png')}
@@ -157,7 +265,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Fallen Tree')}
                 >
                     <Image
                     source={require('./images/fallentree.png')}
@@ -168,7 +276,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Gas Leak')}
                 >
                     <Image
                     source={require('./images/gasleak.png')}
@@ -179,7 +287,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'House Damage')}
                 >
                     <Image
                     source={require('./images/housedamage.png')}
@@ -195,7 +303,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Obstacles')}
                 >
                     <Image
                     source={require('./images/obstacles.png')}
@@ -206,7 +314,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Plumbing')}
                 >
                     <Image
                     source={require('./images/plumbing.png')}
@@ -217,7 +325,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={(e) => this.onPressIssue()}
+                    onPress={(e) => this.onPressIssue(e, 'Water Damage')}
                 >
                     <Image
                     source={require('./images/waterdamage.png')}
@@ -229,7 +337,7 @@ export default class App extends Component {
                 </Row>
 
                 <Row>
-                    <TouchableHighlight style={styles.exitBtn} onPress={()=>this.setModalVisible(!this.state.modalVisible)}>
+                    <TouchableHighlight style={styles.exitBtn} onPress={(e)=>this.clear()}>
                     <Text> X </Text></TouchableHighlight> 
                 </Row>
             </Grid>
@@ -256,7 +364,7 @@ export default class App extends Component {
                 <SegmentedControls
                     options={ ["!", "!!", "!!!"] }
                     onSelection={ this.setSelectedOption.bind(this) }
-                    selectedOption={ this.state.selectedOption }
+                    selectedOption={ this.state.urgency }
                 />
                 </View>
                 </Row>
@@ -267,7 +375,7 @@ export default class App extends Component {
                     style={styles.inputDescription}
                     multiline={true}
                     placeholder="Description"
-                    onChangeText={(text) => this.setState({issueDescription: text})}
+                    onChangeText={(text) => this.setState({description: text})}
                 ></TextInput>
                 </View>
                 </Row>
@@ -275,13 +383,14 @@ export default class App extends Component {
                 <View style={styles.container}>
                 <TouchableOpacity
                     style={styles.submitBtn}
+                    onPress={(e) => this.onPressForm(e)}
                 >
                 <Text style={{color: '#ffffff', fontSize: 18}}>Submit</Text>
                 </TouchableOpacity>
                 </View>
                 </Row>
                 <Row>
-                <TouchableHighlight style={styles.exitBtn} onPress={()=>this.setModalFormVisible(!this.state.modalFormVisible)}>
+                <TouchableHighlight style={styles.exitBtn} onPress={(e)=>this.clear()}>
                 <Text> X </Text></TouchableHighlight>
                 </Row>
                 </Grid>
@@ -304,15 +413,17 @@ export default class App extends Component {
                         <MapView.Marker
                         title={marker.key}
                         key={marker.key}
-                        color='#000000'
+                        pinColor={marker.pinColor}
                         coordinate={marker.coordinate}
                         />
                     ))
                 }
                 </MapView>
+            {this.renderMessage(this.state.displayPinMessage,'Please drop a pin for this emergency')}
+            {this.renderMessage(this.state.confirmationMessage,'Your Crisis has been reported')}
             <TouchableOpacity
                 style={styles.reportBtn}
-                onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                onPress={() => this.setModalVisible(true)}
             >
             <Image
                 style={styles.btn}
@@ -458,6 +569,20 @@ const styles = StyleSheet.create({
         height: 50, 
         backgroundColor: '#ffa20c',
         marginTop: 50
+    },
+
+    message: {
+        zIndex: 2, 
+        padding: 4, 
+        borderRadius: 12,
+        width: 200, 
+        height: 60, 
+        backgroundColor: 'rgba(52, 52, 52, 0.6)',
+        justifyContent: 'center', 
+        alignItems: 'center',
+        bottom: 10, 
+        left: 10,
+        position: 'absolute'
     },
 
     issueContainer: {
