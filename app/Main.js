@@ -21,6 +21,7 @@ import BubbleItem from './BubbleItem'
 import { SearchBar } from 'react-native-elements'
 import { BlurView } from 'react-native-blur'
 import { Grid, Row, Col } from 'react-native-easy-grid'
+import { RadioButtons } from 'react-native-radio-buttons'
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,6 +30,8 @@ const LATITUDE = 37.78825;
 const LONGITUDE = -122.4324;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+let id = 1;
 
 export default class App extends Component {
     constructor(props) {
@@ -44,7 +47,8 @@ export default class App extends Component {
         issue: null,
         modalVisible: false,
         markers: [],
-        dropPin: false
+        dropPin: false,
+        modalFormVisible: false, 
       };
     }
 
@@ -59,15 +63,26 @@ export default class App extends Component {
                     ...this.state.markers,
                     {
                         coordinate: e.nativeEvent.coordinate,
-                        key: '1',
+                        key: id++,
                     },
                 ],
             });
+            this.setState({dropPin: false});
         }
     }
 
     setModalVisible(visible) {
         this.setState({modalVisible: visible})
+    }
+
+    setModalFormVisible(visible) {
+        this.setState({modalFormVisible: visible})
+    }
+
+    onPressIssue(e) {
+        this.setModalFormVisible(!this.state.modalFormVisible);
+        this.setModalVisible(!this.state.modalVisible);
+        this.setState({dropPin: true});
     }
 
     render() {
@@ -89,25 +104,122 @@ export default class App extends Component {
                 <Row>
                     <Text style={styles.title}>Select Your Crisis</Text>
                 </Row>
+
                 <Row>
-                <BubbleItem 
-                    source={require('./images/fire.png')} 
-                    description='Fire'
+                <Grid>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={(e) => this.onPressIssue()}
+                >
+                    <Image
+                    source={require('./images/fire.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
                     onPress={() => this.setModalVisible(!this.state.modalVisible)}
-                />
-                <BubbleItem src={require('./images/cardamage.png')} description='Car Damage'/>
-                <BubbleItem src={require('./images/brokentrafficlight.png')} description='Broken Light'/>
+                >
+                    <Image
+                    source={require('./images/brokentrafficlight.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/cardamage.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                </Grid>
                 </Row>
+
                 <Row>
-                <BubbleItem src={require('./images/fallentree.png')} description='Fallen Tree'/>
-                <BubbleItem src={require('./images/gasleak.png')} description='Gas Leak'/>
-                <BubbleItem src={require('./images/housedamage.png')} description='House Damage'/>
-                </Row>
+                <Grid>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/fallentree.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/gasleak.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/housedamage.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                </Grid>
+                </Row> 
+
                 <Row>
-                <BubbleItem src={require('./images/obstacles.png')} description='Obstacles'/>
-                <BubbleItem src={require('./images/plumbing.png')} description='Plumbing'/>
-                <BubbleItem src={require('./images/waterdamage.png')} description='Water Damge'/>
+                <Grid>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/obstacles.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/plumbing.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                <Col>
+                <TouchableOpacity 
+                    style={styles.issueContainer}
+                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                >
+                    <Image
+                    source={require('./images/waterdamage.png')}
+                    style={styles.issueBtn}
+                    />
+                </TouchableOpacity>
+                </Col>
+                </Grid>
                 </Row>
+
                 <Row></Row>
             </Grid>
             </View>
@@ -116,7 +228,21 @@ export default class App extends Component {
 
             </Modal>
 
+            <Modal
+            animationType="slide"
+            visible={this.state.modalFormVisible}
+            transparent={false}
+            style={styles.modal}
+            >
+            <View style={styles.container}>
+                <Grid>
+                <Row>
+                <Text style={styles.titleForm}>Please Specify Your Emergency</Text>
+                </Row>
 
+                </Grid>
+            </View>
+            </Modal>
 
             <TextInput
                 placeholder="Search"
@@ -253,5 +379,31 @@ const styles = StyleSheet.create({
         fontSize: 40,
         fontWeight: 'bold',
         marginTop: 80,
+    },
+
+    titleForm: {
+        fontSize: 20,
+        fontWeight: 'bold', 
+        marginTop: 20,
+    },
+
+    issueBtn: {
+        zIndex: 3,
+        height: 60, 
+        width: 60
+    },
+
+    issueContainer: {
+        zIndex: 2,
+        padding: 4,
+        borderRadius: 80, 
+        position: 'absolute',
+        margin: 10,
+        height: 80,
+        width: 80,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 0,
+        backgroundColor: '#000000'
     }
 });
