@@ -21,7 +21,7 @@ import BubbleItem from './BubbleItem'
 import { SearchBar } from 'react-native-elements'
 import { BlurView } from 'react-native-blur'
 import { Grid, Row, Col } from 'react-native-easy-grid'
-import { RadioButtons } from 'react-native-radio-buttons'
+import { SegmentedControls } from 'react-native-radio-buttons'
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,6 +85,12 @@ export default class App extends Component {
         this.setState({dropPin: true});
     }
 
+    setSelectedOption(selectedOption){
+        this.setState({
+            selectedOption
+        });
+    }
+
     render() {
         return (
             <View style={styles.container}>
@@ -102,7 +108,9 @@ export default class App extends Component {
             <View style={styles.container}>
             <Grid>
                 <Row>
-                    <Text style={styles.title}>Select Your Crisis</Text>
+                <View style={styles.container}>
+                    <Text style={styles.titleForm}>Select Your Crisis</Text>
+                </View>
                 </Row>
 
                 <Row>
@@ -122,7 +130,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/brokentrafficlight.png')}
@@ -133,7 +141,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/cardamage.png')}
@@ -149,7 +157,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/fallentree.png')}
@@ -160,7 +168,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/gasleak.png')}
@@ -171,7 +179,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/housedamage.png')}
@@ -187,7 +195,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/obstacles.png')}
@@ -198,7 +206,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/plumbing.png')}
@@ -209,7 +217,7 @@ export default class App extends Component {
                 <Col>
                 <TouchableOpacity 
                     style={styles.issueContainer}
-                    onPress={() => this.setModalVisible(!this.state.modalVisible)}
+                    onPress={(e) => this.onPressIssue()}
                 >
                     <Image
                     source={require('./images/waterdamage.png')}
@@ -220,11 +228,12 @@ export default class App extends Component {
                 </Grid>
                 </Row>
 
-                <Row></Row>
+                <Row>
+                    <TouchableHighlight style={styles.exitBtn} onPress={()=>this.setModalVisible(!this.state.modalVisible)}>
+                    <Text> X </Text></TouchableHighlight> 
+                </Row>
             </Grid>
             </View>
-                <TouchableHighlight style={styles.exitBtn} onPress={()=>this.setModalVisible(!this.state.modalVisible)}>
-                <Text> X </Text></TouchableHighlight>
 
             </Modal>
 
@@ -237,9 +246,44 @@ export default class App extends Component {
             <View style={styles.container}>
                 <Grid>
                 <Row>
+                <View style={styles.container}>
                 <Text style={styles.titleForm}>Please Specify Your Emergency</Text>
+                </View>
                 </Row>
-
+                <Row>
+                <View style={styles.container}>
+                <Text style={styles.label}>Urgency</Text>
+                <SegmentedControls
+                    options={ ["!", "!!", "!!!"] }
+                    onSelection={ this.setSelectedOption.bind(this) }
+                    selectedOption={ this.state.selectedOption }
+                />
+                </View>
+                </Row>
+                <Row>
+                <View style={styles.container}>
+                <Text style={styles.label}>Short Description</Text>
+                <TextInput 
+                    style={styles.inputDescription}
+                    multiline={true}
+                    placeholder="Description"
+                    onChangeText={(text) => this.setState({issueDescription: text})}
+                ></TextInput>
+                </View>
+                </Row>
+                <Row>
+                <View style={styles.container}>
+                <TouchableOpacity
+                    style={styles.submitBtn}
+                >
+                <Text style={{color: '#ffffff', fontSize: 18}}>Submit</Text>
+                </TouchableOpacity>
+                </View>
+                </Row>
+                <Row>
+                <TouchableHighlight style={styles.exitBtn} onPress={()=>this.setModalFormVisible(!this.state.modalFormVisible)}>
+                <Text> X </Text></TouchableHighlight>
+                </Row>
                 </Grid>
             </View>
             </Modal>
@@ -382,7 +426,7 @@ const styles = StyleSheet.create({
     },
 
     titleForm: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold', 
         marginTop: 20,
     },
@@ -391,6 +435,29 @@ const styles = StyleSheet.create({
         zIndex: 3,
         height: 60, 
         width: 60
+    },
+
+    label: {
+        marginBottom: 8,
+        fontWeight: 'bold',
+        fontSize: 18
+    },
+
+    inputDescription: {
+        borderWidth: 1, 
+        width: 300, 
+        height: 100,
+        fontSize: 16, 
+        padding: 4
+    },
+
+    submitBtn: {
+        alignItems: 'center',
+        justifyContent: 'center', 
+        width: 300, 
+        height: 50, 
+        backgroundColor: '#ffa20c',
+        marginTop: 50
     },
 
     issueContainer: {
