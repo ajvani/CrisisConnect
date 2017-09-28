@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 
 import MapView from 'react-native-maps';
-import BubbleItem from './BubbleItem'
 
 import { SearchBar } from 'react-native-elements'
 import { BlurView } from 'react-native-blur'
@@ -376,6 +375,7 @@ export default class App extends Component {
                     style={styles.inputDescription}
                     multiline={true}
                     placeholder="Description"
+                    blurOnSubmit={true}
                     onChangeText={(text) => this.setState({description: text})}
                 ></TextInput>
                 </View>
